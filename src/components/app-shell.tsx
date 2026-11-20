@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, Plus, ReceiptText } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { Logo, Avatar } from "@/components/ui";
 import { NavLinks } from "@/components/nav-links";
 import { logoutAction } from "@/app/actions/auth";
@@ -62,11 +62,6 @@ export function AppShell({
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-center border-t border-line bg-white/95 py-2 backdrop-blur lg:hidden" aria-hidden="true">
-        <Link href="/settings" className="flex items-center gap-1.5 text-[10px] font-semibold text-muted">
-          <ReceiptText className="size-3.5" /> Settings & log out
-        </Link>
-      </nav>
       <NavLinks variant="mobile" />
     </div>
   );
