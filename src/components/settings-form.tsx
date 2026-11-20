@@ -9,15 +9,34 @@ export function SettingsForm({ name, email }: { name: string; email: string }) {
   const [state, formAction] = useActionState(updateSettingsAction, {});
   return (
     <form action={formAction} className="space-y-4">
-      <Alert error={state.error} />
+      <Alert error={state.error} success={state.success} />
       <div>
-        <label className="mb-1.5 block text-xs font-bold">Display name</label>
-        <input name="name" required minLength={2} defaultValue={name} className="input-base" />
+        <label htmlFor="profile-name" className="mb-1.5 block text-xs font-bold text-ink">
+          Display name
+        </label>
+        <input
+          id="profile-name"
+          name="name"
+          required
+          minLength={2}
+          maxLength={100}
+          defaultValue={name}
+          className="input-base"
+        />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-bold">Email address</label>
-        <input value={email} disabled className="input-base cursor-not-allowed bg-cream text-muted" />
-        <p className="mt-1.5 text-[11px] text-muted">Your email is used to sign in and can't be changed here.</p>
+        <label htmlFor="profile-email" className="mb-1.5 block text-xs font-bold text-ink">
+          Email address
+        </label>
+        <input
+          id="profile-email"
+          value={email}
+          disabled
+          className="input-base cursor-not-allowed bg-cream text-muted"
+        />
+        <p className="mt-1.5 text-[11px] text-muted">
+          Your email is used to sign in and can&apos;t be changed here.
+        </p>
       </div>
       <SubmitButton pendingText="Saving...">Save changes</SubmitButton>
     </form>

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -11,11 +11,24 @@ export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+export async function cleanupExpiredSessions(): Promise<void> {
+  await prisma.session
+    .deleteMany({ where: { expiresAt: { lte: new Date() } } })
+    .catch(() => {});
+}
+
 export async function createSession(userId: string): Promise<void> {
+  await cleanupExpiredSessions();
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const requestHeaders = await headers();
+  const userAgent = requestHeaders.get("user-agent")?.slice(0, 300) || null;
+  const forwarded = requestHeaders.get("x-forwarded-for");
+  const ipAddress =
+    (forwarded?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip") || null)?.slice(0, 64) ??
+    null;
   await prisma.session.create({
-    data: { userId, tokenHash: hashToken(token), expiresAt },
+    data: { userId, tokenHash: hashToken(token), expiresAt, userAgent, ipAddress },
   });
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
@@ -25,6 +38,19 @@ export async function createSession(userId: string): Promise<void> {
     path: "/",
     expires: expiresAt,
   });
+}
+
+/** Hash of the token in the current request's cookie, for session identification. */
+export const getCurrentSessionHash = cache(async (): Promise<string | null> => {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  return token ? hashToken(token) : null;
+});
+
+export async function destroyAllSessions(userId: string): Promise<void> {
+  await prisma.session.deleteMany({ where: { userId } });
+  const store = await cookies();
+  store.delete(SESSION_COOKIE);
 }
 
 export async function destroySession(): Promise<void> {
